@@ -16,11 +16,35 @@ namespace e_sign_api.Services
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<Models.TemplateSummary> Create(string accessToken, string accountId, Template template)
+        public async Task<Models.TemplateSummary> Create(string accessToken, string accountId, PostTemplateModel template)
         {
             var templatesApi = ApiClientHelper.CreateTemplatesApiClient(_configuration["DocuSign:BasePath"], accessToken);
 
-            var envelopeTemplate = _mapper.Map<EnvelopeTemplate>(template);
+            var htmlCode = string.Join("\n", template.Components.Select(c => HTMLHelper.ParseComponentToHTML(c)));
+
+            var signer = new Signer();
+            signer.RoleName = "Signer";
+            signer.RecipientId = "1";
+            signer.RoutingOrder = "1";
+
+            var recipients = new Recipients();
+            recipients.Signers = new List<Signer> { signer };
+
+            var htmlDefinition = new DocumentHtmlDefinition();
+            htmlDefinition.Source = htmlCode;
+
+            var document = new Document();
+            document.Name = "Document";
+            document.FileExtension = "html";
+            document.DocumentId = "1";
+            document.HtmlDefinition = htmlDefinition;
+
+            var envelopeTemplate = new EnvelopeTemplate();
+            envelopeTemplate.Name = template.Name;
+            envelopeTemplate.Description = template.Description;
+            envelopeTemplate.Documents = new List<Document> { document };
+            envelopeTemplate.Recipients = recipients;
+
             var templateCreateSummary = await templatesApi.CreateTemplateAsync(accountId, envelopeTemplate);
 
             return _mapper.Map<Models.TemplateSummary>(templateCreateSummary);
@@ -46,6 +70,14 @@ namespace e_sign_api.Services
 
             var template = await templatesApi.GetAsync(accountId, templateId);
             if (template == null) throw new InvalidOperationException("Template was not retrieved");
+
+            var templateModel = new GetTemplateModel();
+            templateModel.Description = template.TemplateId;
+            templateModel.Name = template.Name;
+            templateModel.Description = template.Description;
+            templateModel.Components = HTMLHelper.GetTagsFromHTML("")
+                .Select(tag => HTMLHelper.ParseHTMLToComponent(tag))
+                .ToArray();
 
             return _mapper.Map<Template>(template);
         }

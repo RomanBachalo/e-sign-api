@@ -14,63 +14,71 @@ namespace e_sign_api.Services
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+
+            var doc = new Document
+            {
+                HtmlDefinition = new DocumentHtmlDefinition
+                {
+                    Source = "<></>",
+                    DocumentId = "1"
+                },
+                Name = "Order acknowledgement"
+            };
         }
 
-        public async Task<Models.TemplateSummary> Create(string accessToken, string accountId, Models.Envelope envelope)
+        public async Task<Models.EnvelopeSummary> Create(string accessToken, string accountId, Models.Envelope envelope)
         {
             var envelopesApi = ApiClientHelper.CreateEnvelopesApiClient(_configuration["DocuSign:BasePath"], accessToken);
 
             var envelopeDefinition = _mapper.Map<EnvelopeDefinition>(envelope);
             var envelopeCreateSummary = await envelopesApi.CreateEnvelopeAsync(accountId, envelopeDefinition);
 
-            return _mapper.Map<Models.TemplateSummary>(envelopeCreateSummary);
+            return _mapper.Map<Models.EnvelopeSummary>(envelopeCreateSummary);
         }
 
-        public async Task<Models.TemplateSummary> Delete(string accessToken, string accountId, string templateId)
+        public async Task<Models.EnvelopeSummary> Delete(string accessToken, string accountId, string envelopeId)
         {
-            var templatesApi = ApiClientHelper.CreateTemplatesApiClient(_configuration["DocuSign:BasePath"], accessToken);
+            var envelopesApi = ApiClientHelper.CreateEnvelopesApiClient(_configuration["DocuSign:BasePath"], accessToken);
 
-            // update template status to "deleted"
-            var template = new EnvelopeTemplate
+            var envelopeDeleteModel = new DocuSign.eSign.Model.Envelope
             {
-                Status = "deleted"
+                Status = "voided"
             };
-
-            var summary = await templatesApi.UpdateAsync(accountId, templateId, template);
-            return _mapper.Map<Models.TemplateSummary>(summary);
+            var envelopeDeleteSummary = await envelopesApi.UpdateAsync(accountId, envelopeId, envelopeDeleteModel);
+            return _mapper.Map<Models.EnvelopeSummary>(envelopeDeleteSummary);
         }
 
-        public async Task<Template> GetById(string accessToken, string accountId, string templateId)
+        public async Task<Models.Envelope> GetById(string accessToken, string accountId, string envelopeId)
         {
-            var templatesApi = ApiClientHelper.CreateTemplatesApiClient(_configuration["DocuSign:BasePath"], accessToken);
+            var envelopesApi = ApiClientHelper.CreateEnvelopesApiClient(_configuration["DocuSign:BasePath"], accessToken);
 
-            var template = await templatesApi.GetAsync(accountId, templateId);
-            if (template == null) throw new InvalidOperationException("Template was not retrieved");
+            var envelope = await envelopesApi.GetEnvelopeAsync(accountId, envelopeId);
+            if (envelope == null) throw new InvalidOperationException("Envelope was not retrieved");
 
-            return _mapper.Map<Template>(template);
+            return _mapper.Map<Models.Envelope>(envelope);
         }
 
-        public async Task<Models.TemplateSummary[]> GetAll(string accessToken, string accountId)
+        public async Task<Models.EnvelopeSummary[]> GetAll(string accessToken, string accountId)
         {
-            var templatesApi = ApiClientHelper.CreateTemplatesApiClient(_configuration["DocuSign:BasePath"], accessToken);
+            var envelopesApi = ApiClientHelper.CreateEnvelopesApiClient(_configuration["DocuSign:BasePath"], accessToken);
 
-            var templatesResultResponse = await templatesApi.ListTemplatesAsync(accountId);
-            if (templatesResultResponse == null) throw new InvalidOperationException("Templates were not retrieved");
+            var envelopesInformation = await envelopesApi.ListStatusAsync(accountId);
+            if (envelopesInformation == null) throw new InvalidOperationException("Envelopes were not retrieved");
 
-            var templates = templatesResultResponse.EnvelopeTemplates.ToArray();
-            if (templates == null) throw new InvalidOperationException("Templates were not retrieved");
+            var envelopes = envelopesInformation.Envelopes;
+            if (envelopes == null || envelopes.Count == 0) throw new InvalidOperationException("Envelopes were not retrieved");
 
-            return _mapper.Map<Models.TemplateSummary[]>(templates);
+            return _mapper.Map<Models.EnvelopeSummary[]>(envelopes.ToArray());
         }
 
-        public async Task<Models.TemplateSummary> Update(string accessToken, string accountId, string templateId, Models.Envelope envelope)
+        public async Task<Models.EnvelopeSummary> Update(string accessToken, string accountId, string envelopeId, Models.Envelope envelope)
         {
-            var templatesApi = ApiClientHelper.CreateTemplatesApiClient(_configuration["DocuSign:BasePath"], accessToken);
+            var envelopesApi = ApiClientHelper.CreateEnvelopesApiClient(_configuration["DocuSign:BasePath"], accessToken);
 
-            var envelopeTemplate = _mapper.Map<EnvelopeTemplate>(template);
-            var templateUpdateSummary = await templatesApi.UpdateAsync(accountId, templateId, envelopeTemplate);
+            var envelopeData = _mapper.Map<DocuSign.eSign.Model.Envelope>(envelope);
+            var envelopeUpdateSummary = await envelopesApi.UpdateAsync(accountId, envelopeId, envelopeData);
 
-            return _mapper.Map<Models.TemplateSummary>(templateUpdateSummary);
+            return _mapper.Map<Models.EnvelopeSummary>(envelopeUpdateSummary);
         }
     }
 }
