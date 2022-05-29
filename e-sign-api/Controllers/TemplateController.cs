@@ -23,7 +23,7 @@ namespace e_sign_api.Controllers
         {
             if (!_authHelper.CheckToken())
             {
-                return Redirect("/account/login");
+                _authHelper.LoginUser();
             }
 
             var userInfo = _authHelper.User;
@@ -38,7 +38,7 @@ namespace e_sign_api.Controllers
         {
             if (!_authHelper.CheckToken())
             {
-                return Redirect("/account/login");
+                _authHelper.LoginUser();
             }
 
             var userInfo = _authHelper.User;
@@ -48,30 +48,30 @@ namespace e_sign_api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTemplate([FromBody] Template template)
+        public async Task<IActionResult> CreateTemplate([FromBody] PostTemplateModel template)
         {
             if (!_authHelper.CheckToken())
             {
-                return Redirect("/account/login");
+                _authHelper.LoginUser();
             }
 
             var userInfo = _authHelper.User;
-            var createResponse = _templateService.Create(userInfo.AccessToken, userInfo.AccountId, template);
+            var createResponse = await _templateService.Create(userInfo.AccessToken, userInfo.AccountId, template);
 
             return Ok(createResponse);
         }
 
         [HttpPut]
         [Route("{id}")]
-        public async Task<IActionResult> UpdateTemplate(string id, [FromBody] Template template)
+        public async Task<IActionResult> UpdateTemplate(string id, [FromBody] PostTemplateModel template)
         {
             if (!_authHelper.CheckToken())
             {
-                return Redirect("/account/login");
+                _authHelper.LoginUser();
             }
 
             var userInfo = _authHelper.User;
-            var updateResponse = _templateService.Update(userInfo.AccessToken, userInfo.AccountId, id, template);
+            var updateResponse = await _templateService.Update(userInfo.AccessToken, userInfo.AccountId, id, template);
 
             return Ok(updateResponse);
         }
@@ -82,7 +82,7 @@ namespace e_sign_api.Controllers
         {
             if (!_authHelper.CheckToken())
             {
-                return Redirect("/account/login");
+                _authHelper.LoginUser();
             }
 
             var userInfo = _authHelper.User;

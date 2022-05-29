@@ -8,8 +8,15 @@ namespace e_sign_api.AutoMapper
         public MapperProfile()
         {
             CreateMap<Template, DocuSign.eSign.Model.EnvelopeTemplate>().ReverseMap();
+            CreateMap<DocuSign.eSign.Model.EnvelopeTemplate, TemplateSummary>()
+                .ForMember(dest => dest.TemplateId, opt => opt.MapFrom(src => src.TemplateId))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.CreateDate, opt => opt.MapFrom(src => src.Created))
+                .ForMember(dest => dest.UpdateDate, opt => opt.MapFrom(src => src.LastModified))
+                .ReverseMap();
             CreateMap<TemplateSummary, DocuSign.eSign.Model.TemplateSummary>().ReverseMap();
             CreateMap<Envelope, DocuSign.eSign.Model.EnvelopeDefinition>().ReverseMap();
+            CreateMap<EnvelopeSummary, DocuSign.eSign.Model.EnvelopeSummary>().ReverseMap();
         }
     }
 }
