@@ -30,7 +30,7 @@ namespace e_sign_api.Services
 
             env.TemplateRoles = new List<TemplateRole> { signer };
             env.Status = "sent";
-            env.EmailSubject = "Sign this document set";
+            env.EmailSubject = envelope.Name;
 
             var envelopeCreateSummary = await envelopesApi.CreateEnvelopeAsync(accountId, env);
 
