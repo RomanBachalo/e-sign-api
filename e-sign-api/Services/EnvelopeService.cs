@@ -63,10 +63,13 @@ namespace e_sign_api.Services
         {
             var envelopesApi = ApiClientHelper.CreateEnvelopesApiClient(_configuration["DocuSign:BasePath"], accessToken);
 
-            var envelopesInformation = await envelopesApi.ListStatusAsync(accountId);
+            var options = new DocuSign.eSign.Api.EnvelopesApi.ListStatusChangesOptions();
+            options.fromDate = "2022-01-01";
+
+            var envelopesInformation = await envelopesApi.ListStatusChangesAsync(accountId, options);
             if (envelopesInformation == null) throw new InvalidOperationException("Envelopes were not retrieved");
 
-            var envelopes = envelopesInformation.Envelopes;
+            var envelopes = envelopesInformation.Envelopes.Where(e => !string.IsNullOrEmpty(e.EmailSubject)).ToList();
             if (envelopes == null || envelopes.Count == 0) throw new InvalidOperationException("Envelopes were not retrieved");
 
             return _mapper.Map<Models.EnvelopeSummary[]>(envelopes.ToArray());

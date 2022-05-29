@@ -89,7 +89,7 @@ namespace e_sign_api.Services
             var templatesResultResponse = await templatesApi.ListTemplatesAsync(accountId);
             if (templatesResultResponse == null) throw new InvalidOperationException("Templates were not retrieved");
 
-            var templates = templatesResultResponse.EnvelopeTemplates.ToArray();
+            var templates = templatesResultResponse.EnvelopeTemplates.Where(t => !string.IsNullOrEmpty(t.Name)).ToArray();
             if (templates == null) throw new InvalidOperationException("Templates were not retrieved");
 
             return _mapper.Map<Models.TemplateSummary[]>(templates);
